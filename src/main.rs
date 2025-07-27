@@ -32,14 +32,14 @@ impl EventHandler for Handler {
                 let mut out_string = String::from("```r\n");
 
                 // Find the maximum length of time zone names for alignment
-                let max_len = tzs.iter().map(|s| s.len()).max().unwrap_or(0);
+                let max_len = tzs.iter().map(|s| s.len()).max().unwrap_or(0) + 3;
 
                 for tz_name in tzs {
                     let tz: Tz = tz_name.parse().expect("Invalid time zone");
                     let now = Utc::now().with_timezone(&tz);
                     let time_str = now.format("%m-%d %H:%M").to_string();
                     out_string.push_str(&format!(
-                        "{:width$} - {}\n",
+                        "{:.<width$}{}\n",
                         tz_name,
                         time_str,
                         width = max_len
