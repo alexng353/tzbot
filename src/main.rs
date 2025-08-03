@@ -19,12 +19,7 @@ fn build_tz_message() -> String {
         let tz: Tz = tz_name.parse().expect("Invalid time zone");
         let now = Utc::now().with_timezone(&tz);
         let time_str = now.format("%m-%d %H:%M").to_string();
-        out_string.push_str(&format!(
-            "{:.<width$}{}\n",
-            tz_name,
-            time_str,
-            width = max_len
-        ));
+        out_string.push_str(&format!("{tz_name:.<max_len$}{time_str}\n",));
     }
 
     out_string.push_str("```");
@@ -34,9 +29,11 @@ fn build_tz_message() -> String {
 async fn send_webhook() {
     let http = serenity::http::Http::new("");
     let webhook = Webhook::from_url(
-                &http,
-                "https://discord.com/api/webhooks/1401706619473100924/tmqza36wAWHNawp1OYUTaktQ8fjA4tpExbWsMcp4obn7zLkVCDFBk6qZUNazpfuKmFPD",
-            ).await.expect("Err creating webhook");
+        &http,
+        "https://discord.com/api/webhooks/1401706619473100924/tmqza36wAWHNawp1OYUTaktQ8fjA4tpExbWsMcp4obn7zLkVCDFBk6qZUNazpfuKmFPD",
+    )
+        .await
+        .expect("Err creating webhook");
 
     let builder = ExecuteWebhook::new()
         .content(build_tz_message())
