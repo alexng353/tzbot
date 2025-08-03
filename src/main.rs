@@ -46,10 +46,13 @@ async fn send_webhook() {
         .execute(&http, false, builder)
         .await
         .expect("Could not execute webhook.");
+    println!("Sent webhook");
 }
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
+    send_webhook().await;
+
     let sched = JobScheduler::new().await?;
     let job = Job::new_async("0 0,30 * * * *", |_uuid, _l| {
         Box::pin(async move {
