@@ -37,7 +37,7 @@ async fn send_webhook() {
 
     let builder = ExecuteWebhook::new()
         .content(build_tz_message())
-        .username("Webhook test");
+        .username("World Clock");
 
     webhook
         .execute(&http, false, builder)
