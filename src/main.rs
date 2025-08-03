@@ -1,80 +1,65 @@
-use std::env;
-
 use chrono::prelude::*;
 use chrono_tz::Tz;
-use serenity::async_trait;
-use serenity::model::channel::Message;
-use serenity::prelude::*;
-struct Handler;
+use serenity::all::{ExecuteWebhook, Webhook};
+use tokio_cron_scheduler::{Job, JobScheduler};
 
-#[async_trait]
-impl EventHandler for Handler {
-    async fn message(&self, ctx: Context, msg: Message) {
-        if msg.author.bot {
-            return;
-        }
-        match msg.content.as_str() {
-            "!ping" => {
-                if let Err(why) = msg.channel_id.say(&ctx.http, "Pong!").await {
-                    println!("Error sending message: {why:?}");
-                }
-            }
-            "!tzs" => {
-                // America/Vancouver, Singapore, Jakarta, Tokyo, Toronto.
-                let tzs = vec![
-                    "America/Vancouver",
-                    "America/Toronto",
-                    "Asia/Jakarta",
-                    "Asia/Singapore",
-                    "Asia/Tokyo",
-                ];
+fn build_tz_message() -> String {
+    let tzs = vec![
+        "America/Vancouver",
+        "America/Toronto",
+        "Asia/Jakarta",
+        "Asia/Singapore",
+        "Asia/Tokyo",
+    ];
 
-                let mut out_string = String::from("```r\n");
+    let mut out_string = String::from("```r\n");
+    let max_len = tzs.iter().map(|s| s.len()).max().unwrap_or(0) + 3;
 
-                // Find the maximum length of time zone names for alignment
-                let max_len = tzs.iter().map(|s| s.len()).max().unwrap_or(0) + 3;
-
-                for tz_name in tzs {
-                    let tz: Tz = tz_name.parse().expect("Invalid time zone");
-                    let now = Utc::now().with_timezone(&tz);
-                    let time_str = now.format("%m-%d %H:%M").to_string();
-                    out_string.push_str(&format!(
-                        "{:.<width$}{}\n",
-                        tz_name,
-                        time_str,
-                        width = max_len
-                    ));
-                }
-                out_string.push_str("```");
-
-                println!("{}", out_string);
-
-                if let Err(why) = msg.channel_id.say(&ctx.http, out_string).await {
-                    println!("Error sending message: {why:?}");
-                }
-            }
-            _ => println!("Got a message from {}: {}", msg.author.name, msg.content),
-        }
+    for tz_name in tzs {
+        let tz: Tz = tz_name.parse().expect("Invalid time zone");
+        let now = Utc::now().with_timezone(&tz);
+        let time_str = now.format("%m-%d %H:%M").to_string();
+        out_string.push_str(&format!(
+            "{:.<width$}{}\n",
+            tz_name,
+            time_str,
+            width = max_len
+        ));
     }
+
+    out_string.push_str("```");
+    out_string
+}
+
+async fn send_webhook() {
+    let http = serenity::http::Http::new("");
+    let webhook = Webhook::from_url(
+                &http,
+                "https://discord.com/api/webhooks/1401706619473100924/tmqza36wAWHNawp1OYUTaktQ8fjA4tpExbWsMcp4obn7zLkVCDFBk6qZUNazpfuKmFPD",
+            ).await.expect("Err creating webhook");
+
+    let builder = ExecuteWebhook::new()
+        .content(build_tz_message())
+        .username("Webhook test");
+
+    webhook
+        .execute(&http, false, builder)
+        .await
+        .expect("Could not execute webhook.");
 }
 
 #[tokio::main]
-async fn main() {
-    // Login with a bot token from the environment
-    let token = env::var("DISCORD_TOKEN").expect("Expected a token in the environment");
-    // Set gateway intents, which decides what events the bot will be notified about
-    let intents = GatewayIntents::GUILD_MESSAGES
-        | GatewayIntents::DIRECT_MESSAGES
-        | GatewayIntents::MESSAGE_CONTENT;
+async fn main() -> anyhow::Result<()> {
+    let sched = JobScheduler::new().await?;
+    let job = Job::new_async("0 0,30 * * * *", |_uuid, _l| {
+        Box::pin(async move {
+            send_webhook().await;
+        })
+    })
+    .expect("Failed to create cron job");
+    sched.add(job).await?;
 
-    // Create a new instance of the Client, logging in as a bot.
-    let mut client = Client::builder(&token, intents)
-        .event_handler(Handler)
-        .await
-        .expect("Err creating client");
-
-    // Start listening for events by starting a single shard
-    if let Err(why) = client.start().await {
-        println!("Client error: {why:?}");
-    }
+    sched.start().await?;
+    tokio::time::sleep(std::time::Duration::from_secs(100)).await;
+    Ok(())
 }
