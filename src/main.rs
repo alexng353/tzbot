@@ -47,7 +47,7 @@ async fn send_webhook() {
 }
 
 #[tokio::main]
-async fn main() -> anyhow::Result<()> {
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
     send_webhook().await;
 
     let sched = JobScheduler::new().await?;
