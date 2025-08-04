@@ -7,7 +7,7 @@ edition = "2024"
 chrono = { version = "0.4.23", features = ["serde"] }
 chrono-tz = "0.10.4"
 tokio = { version = "1.21.2", features = ["full"] }
-tokio-cron-scheduler = "0.14"
+tokio-cron-scheduler = { version = "0.14", features=["english"] }
 
 [dependencies.serenity]
 version = "0.12"

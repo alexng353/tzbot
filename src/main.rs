@@ -51,8 +51,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     send_webhook().await;
 
     let sched = JobScheduler::new().await?;
-    let job = Job::new_async("0 0,30 * * * *", |_uuid, _l| {
+    // let job = Job::new_async("0 0,30 * * * *", |_uuid, _l| {
+    let job = Job::new_async("every 30 minutes", move |_uuid, _l| {
         Box::pin(async move {
+            println!("Running job {}", chrono::Local::now());
             send_webhook().await;
         })
     })
