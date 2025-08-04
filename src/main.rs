@@ -1,7 +1,6 @@
 use chrono::prelude::*;
 use chrono_tz::Tz;
 use serenity::all::{ExecuteWebhook, Webhook};
-// use tokio_cron_scheduler::{Job, JobScheduler};
 
 fn build_tz_message() -> String {
     let tzs = vec![
@@ -49,19 +48,6 @@ async fn send_webhook() {
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     send_webhook().await;
-    //
-    // let sched = JobScheduler::new().await?;
-    // // let job = Job::new_async("0 0,30 * * * *", |_uuid, _l| {
-    // let job = Job::new_async("every 1 minutes", move |_uuid, _l| {
-    //     Box::pin(async move {
-    //         println!("Running job {}", chrono::Local::now());
-    //         send_webhook().await;
-    //     })
-    // })
-    // .expect("Failed to create cron job");
-    // sched.add(job).await?;
-    //
-    // sched.start().await?;
-    // tokio::time::sleep(std::time::Duration::from_secs(100)).await;
+    tokio::time::sleep(std::time::Duration::from_secs(1000)).await;
     Ok(())
 }
