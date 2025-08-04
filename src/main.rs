@@ -48,6 +48,5 @@ async fn send_webhook() {
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     send_webhook().await;
-    tokio::time::sleep(std::time::Duration::from_secs(1000)).await;
     Ok(())
 }
