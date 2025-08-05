@@ -25,12 +25,9 @@ fn build_tz_message() -> String {
     out_string
 }
 
-async fn send_webhook() {
+async fn send_webhook(webhook_url: &str) {
     let http = serenity::http::Http::new("");
-    let webhook = Webhook::from_url(
-        &http,
-        "https://discord.com/api/webhooks/1401706619473100924/tmqza36wAWHNawp1OYUTaktQ8fjA4tpExbWsMcp4obn7zLkVCDFBk6qZUNazpfuKmFPD",
-    )
+    let webhook = Webhook::from_url(&http, webhook_url)
         .await
         .expect("Err creating webhook");
 
@@ -46,7 +43,7 @@ async fn send_webhook() {
 }
 
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    send_webhook().await;
-    Ok(())
+async fn main() {
+    let webhook_url = std::env::var("DISCORD_WEBHOOK").expect("No webhook url");
+    send_webhook(&webhook_url).await;
 }
